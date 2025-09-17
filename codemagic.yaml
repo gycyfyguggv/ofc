@@ -12,10 +12,20 @@ workflows:
         UNITY_PATH: "/Applications/Unity/Hub/Editor/2023.1.0f1/Unity.app/Contents/MacOS/Unity"
 
     scripts:
-      - name: Export Unity iOS project
-        script: |
-          $UNITY_PATH -batchmode -quit -projectPath . -executeMethod BuildScript.BuildiOS
+  - name: Build Xcode project (no signing)
+    script: |
+      cd Unity-iPhone
+      xcodebuild -scheme Unity-iPhone \
+        -project Unity-iPhone.xcodeproj \
+        -configuration Release \
+        -archivePath build/Unity-iPhone.xcarchive archive \
+        CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
+      xcodebuild -exportArchive \
+        -archivePath build/Unity-iPhone.xcarchive \
+        -exportPath build/ipa \
+        -exportOptionsPlist ExportOptions.plist \
+        CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
       - name: Build Xcode project (no signing)
         script: |
           cd build/ios

@@ -1,28 +1,27 @@
 workflows:
-  ios-unsigned:
-    name: Build Unity iOS (Unsigned IPA)
+  unity_ios_unsigned:
+    name: Unity iOS Unsigned IPA
+    max_build_duration: 60
     environment:
       xcode: latest
-      vars:
-        XCODE_WORKSPACE: "Unity-iPhone.xcodeproj"
-        XCODE_SCHEME: "Unity-iPhone"
     scripts:
-      - name: Build Xcode project (no signing)
+      - name: Build Unity iOS project (no signing)
         script: |
-          xcodebuild -scheme "$XCODE_SCHEME" \
-            -project "$XCODE_WORKSPACE" \
+          echo "🔨 Starting Unity iOS build without signing..."
+          # بناء مشروع iOS بدون أرشفة
+          xcodebuild \
+            -project Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
             -configuration Release \
-            -archivePath build/Unity-iPhone.xcarchive archive \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+            -sdk iphoneos \
+            build
 
-          xcodebuild -exportArchive \
-            -archivePath build/Unity-iPhone.xcarchive \
-            -exportPath build/ipa \
-            -exportOptionsPlist ExportOptions.plist \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          echo "📦 Packaging IPA..."
+          cd build/Release-iphoneos
+          mkdir Payload
+          cp -r Unity-iPhone.app Payload/
+          zip -r UnsignedApp.ipa Payload
+
+          echo "✅ IPA created at: build/Release-iphoneos/UnsignedApp.ipa"
     artifacts:
-      - build/ipa/*.ipa
-    publishing:
-      email:
-        recipients:
-          - "your_email@example.com"
+      - build/Release-iphoneos/UnsignedApp.ipa

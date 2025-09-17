@@ -1,15 +1,27 @@
 workflows:
-  unity_ios_ipa:
-    name: Unity iOS IPA
+  unity_ios_unsigned:
+    name: Unity iOS Unsigned IPA
     max_build_duration: 60
     environment:
       xcode: latest
     scripts:
-      - name: Build Unity iOS project
+      - name: Build Unity iOS project (no signing)
         script: |
-          echo "Building Unity iOS Project..."
-          cd $CM_BUILD_DIR
-          xcodebuild -project Unity-iPhone.xcodeproj -scheme Unity-iPhone -configuration Release -archivePath $CM_BUILD_DIR/build/Unity-iPhone.xcarchive archive
-          xcodebuild -exportArchive -archivePath $CM_BUILD_DIR/build/Unity-iPhone.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $CM_BUILD_DIR/build/IPA
+          echo "🔨 Starting Unity iOS build without signing..."
+          # بناء مشروع iOS بدون أرشفة
+          xcodebuild \
+            -project Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            build
+
+          echo "📦 Packaging IPA..."
+          cd build/Release-iphoneos
+          mkdir Payload
+          cp -r Unity-iPhone.app Payload/
+          zip -r UnsignedApp.ipa Payload
+
+          echo "✅ IPA created at: build/Release-iphoneos/UnsignedApp.ipa"
     artifacts:
-      - build/IPA/*.ipa
+      - build/Release-iphoneos/UnsignedApp.ipa

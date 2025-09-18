@@ -16,26 +16,22 @@ workflows:
         script: |
           echo "Building Unity iOS Project..."
           
-          # تأكد من أن اسم المشروع والـ scheme صحيحان
+          # تم تغيير -workspace إلى -project
           xcodebuild build \
-            -workspace "Unity-iPhone.xcworkspace" \
+            -project "Unity-iPhone.xcodeproj" \
             -scheme "Unity-iPhone" \
             -sdk iphoneos \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             
-            # هذه الأوامر تخبر Xcode بأن يترك التوقيع لـ Codemagic
-            # يجب أن تكون هذه الأوامر في سطر واحد
             CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE="" \
             CODE_SIGNING_REQUIRED=NO \
             
-            # هذه الأوامر تُعطل الشهادات والبروفايلات اليدوية
             PROVISIONING_PROFILE_SPECIFIER="" \
             DEVELOPMENT_TEAM=""
             
     # تحديد الملفات التي يجب حفظها كـ artifacts
     artifacts:
-      # هذا المسار هو الأكثر شيوعًا للملف النهائي
       - 'build/Unity-iPhone.ipa'
       - 'build/Release-iphoneos/Unity-iPhone.ipa'

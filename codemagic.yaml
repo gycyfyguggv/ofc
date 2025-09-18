@@ -31,10 +31,11 @@ workflows:
             CODE_SIGNING_REQUIRED=NO \
             
             # هذه الأوامر تُعطل الشهادات والبروفايلات اليدوية
-            # حتى لا يحدث تضارب مع التوقيع التلقائي لـ Codemagic
             PROVISIONING_PROFILE_SPECIFIER="" \
             DEVELOPMENT_TEAM=""
             
     # تحديد الملفات التي يجب حفظها كـ artifacts
     artifacts:
+      # هذا المسار هو الأكثر شيوعًا للملف النهائي
+      - 'build/Unity-iPhone.ipa'
       - 'build/Release-iphoneos/Unity-iPhone.ipa'

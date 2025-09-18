@@ -1,58 +1,40 @@
-# اسم سير العمل (workflow) - يمكنك تغييره لأي اسم تريده
+# اسم سير العمل (workflow)
 workflows:
   unity-ios-build:
     name: Unity iOS Build
 
     # إعدادات بيئة البناء
     environment:
-      # إصدار Xcode، يمكنك تغيير latest إلى إصدار معين
       xcode: latest
-      # تعريف متغيرات البيئة التي تم إعدادها في واجهة Codemagic
+      # تعريف متغيرات البيئة التي تم إعدادها في Codemagic
       groups:
         - apple_signing
       
-    # الأجهزة والمحاكيات (Simulators) التي سيتم استخدامها لاختبار التطبيق
-    # يمكنك حذف هذا الجزء إذا لم تكن بحاجة لاختبارات
-    #  xcode-project: 'Unity-iPhone.xcodeproj'
-    #  xcode-scheme: 'Unity-iPhone'
-    #  test_devices:
-    #    - 'iPhone 14'
-
     # الأوامر التي سيتم تنفيذها لعملية البناء
     scripts:
-      # بناء مشروع Unity iOS
       - name: Build Unity iOS Project
         script: |
+          echo "Building Unity iOS Project..."
+          
           # تأكد من أن اسم المشروع والـ scheme صحيحان
           xcodebuild build \
-            -project "Unity-iPhone.xcodeproj" \
+            -workspace "Unity-iPhone.xcworkspace" \
             -scheme "Unity-iPhone" \
             -sdk iphoneos \
-            -configuration Release
-
-      # توقيع التطبيق بشكل تلقائي
-      - name: Code Signing with Apple ID
-        script: |
-          # هذا السطر يستخدم متغيرات البيئة التي أدخلتها (Apple ID و App-specific password)
-          # لإدارة الشهادات والتوقيع تلقائياً.
-          echo "Starting automatic code signing..."
-          # The next line is for illustrative purposes. The actual signing is done by Codemagic's backend
-          # based on your environment variables and the xcodebuild command's settings.
-          # The key here is that by providing CM_APPLE_ID and CM_APP_SPECIFIC_PASSWORD
-          # as environment variables, Codemagic takes care of all the signing logic.
-          echo "Code signing will be handled by Codemagic using the configured environment variables."
-
-      # إنشاء ملف IPA
-      - name: Create IPA
-        script: |
-          echo "Packaging IPA..."
-          # تأكد من أن المسار إلى ملف .app صحيح
-          # في حالتك، سيكون غالبًا ضمن مجلد Build أو Unity-iPhone
-          # هذا المسار قد يختلف حسب إعدادات مشروعك
-          mkdir Payload
-          cp -r "build/Unity-iPhone.app" Payload/
-          zip -r "Unity-iPhone.ipa" Payload
-          
-    # تحديد الملفات التي يجب حفظها كـ artifacts (منتجات نهائية)
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            
+            # هذه الأوامر تخبر Xcode بأن يترك التوقيع لـ Codemagic
+            # يجب أن تكون هذه الأوامر في سطر واحد
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
+            CODE_SIGNING_REQUIRED=NO \
+            
+            # هذه الأوامر تُعطل الشهادات والبروفايلات اليدوية
+            # حتى لا يحدث تضارب مع التوقيع التلقائي لـ Codemagic
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            DEVELOPMENT_TEAM=""
+            
+    # تحديد الملفات التي يجب حفظها كـ artifacts
     artifacts:
-      - "build/Unity-iPhone.ipa"
+      - 'build/Release-iphoneos/Unity-iPhone.ipa'

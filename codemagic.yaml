@@ -1,37 +1,32 @@
-# اسم سير العمل (workflow)
 workflows:
-  unity-ios-build:
-    name: Unity iOS Build
-
-    # إعدادات بيئة البناء
+  ios-try-unsigned:
+    name: Try build unsigned IPA
     environment:
       xcode: latest
-      # تعريف متغيرات البيئة التي تم إعدادها في Codemagic
-      groups:
-        - apple_signing
-      
-    # الأوامر التي سيتم تنفيذها لعملية البناء
     scripts:
-      - name: Build Unity iOS Project
+      - name: Try build (no signing)
         script: |
-          echo "Building Unity iOS Project..."
-          
-          # تم تغيير -workspace إلى -project
-          xcodebuild build \
-            -project "Unity-iPhone.xcodeproj" \
+          set -e
+          # build directory
+          BUILD_DIR="$CM_BUILD_DIR/build/Release-iphoneos"
+          mkdir -p "$BUILD_DIR"
+          xcodebuild -project Unity-iPhone.xcodeproj \
             -scheme "Unity-iPhone" \
-            -sdk iphoneos \
             -configuration Release \
-            -destination 'generic/platform=iOS' \
-            
-            CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE="" \
-            CODE_SIGNING_REQUIRED=NO \
-            
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            DEVELOPMENT_TEAM=""
-            
-    # تحديد الملفات التي يجب حفظها كـ artifacts
+            -sdk iphoneos \
+            BUILD_DIR="$BUILD_DIR" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build || true
+
+          if [ -d "$BUILD_DIR/Unity-iPhone.app" ]; then
+            echo "App built, packaging IPA..."
+            cd "$BUILD_DIR"
+            mkdir -p Payload
+            cp -R Unity-iPhone.app Payload/
+            zip -r UnsignedApp.ipa Payload
+            echo "IPA ready: $BUILD_DIR/UnsignedApp.ipa"
+          else
+            echo "No .app produced; build likely required signing. See logs."
+            exit 2
+          fi
     artifacts:
-      - 'build/Unity-iPhone.ipa'
-      - 'build/Release-iphoneos/Unity-iPhone.ipa'
+      - build/Release-iphoneos/UnsignedApp.ipa

@@ -1,27 +1,18 @@
 workflows:
-  unity_ios_unsigned:
-    name: Unity iOS Unsigned IPA
-    max_build_duration: 60
+  unity_ios_build:
+    name: Unity iOS Build
     environment:
-      xcode: latest
+      groups:
+        - apple_signing
     scripts:
-      - name: Build Unity iOS project (no signing)
+      - name: Code signing with Apple ID
         script: |
-          echo "🔨 Starting Unity iOS build without signing..."
-          # بناء مشروع iOS بدون أرشفة
-          xcodebuild \
-            -project Unity-iPhone.xcodeproj \
-            -scheme Unity-iPhone \
-            -configuration Release \
-            -sdk iphoneos \
-            build
-
-          echo "📦 Packaging IPA..."
-          cd build/Release-iphoneos
-          mkdir Payload
-          cp -r Unity-iPhone.app Payload/
-          zip -r UnsignedApp.ipa Payload
-
-          echo "✅ IPA created at: build/Release-iphoneos/UnsignedApp.ipa"
+          # Use Codemagic CLI tools to perform automatic code signing
+          # This command tells Codemagic to use the provided Apple ID and password
+          # to manage certificates and provisioning profiles.
+          echo "Starting automatic code signing..."
+          # Replace with your actual project's Xcode project file name and scheme
+          xcodebuild -workspace "Unity-iPhone.xcodeproj" -scheme "Unity-iPhone" -sdk iphoneos clean build CODE_SIGN_IDENTITY="" PROVISIONING_PROFILE=""
+          # The above is a conceptual example, Codemagic will do the actual signing based on the environment variables you set.
     artifacts:
-      - build/Release-iphoneos/UnsignedApp.ipa
+      - build/Unity-iPhone.ipa

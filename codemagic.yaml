@@ -1,32 +1,39 @@
 workflows:
-  ios-try-unsigned:
-    name: Try build unsigned IPA
+  unity-ios-unsigned:
+    name: Unity iOS Unsigned Build
+    instance_type: mac_mini_m2 # أو أي جهاز Mac آخر متوفر
     environment:
-      xcode: latest
+      unity: 2022.3.10f1 # استبدل بإصدار Unity الذي تستخدمه
     scripts:
-      - name: Try build (no signing)
+      - name: Activate Unity license
         script: |
-          set -e
-          # build directory
-          BUILD_DIR="$CM_BUILD_DIR/build/Release-iphoneos"
-          mkdir -p "$BUILD_DIR"
-          xcodebuild -project Unity-iPhone.xcodeproj \
-            -scheme "Unity-iPhone" \
-            -configuration Release \
+          /Applications/Unity\ Hub.app/Contents/MacOS/Unity\ Hub \
+            -- --headless \
+            -quit \
+            -batchmode \
+            -username "$UNITY_USERNAME" \
+            -password "$UNITY_PASSWORD" \
+            -serial "$UNITY_SERIAL"
+      - name: Build Xcode project from Unity
+        script: |
+          /Applications/Unity/Hub/Editor/$UNITY_VERSION/Unity.app/Contents/MacOS/Unity \
+            -quit \
+            -batchmode \
+            -projectPath . \
+            -executeMethod BuildScript.PerformIOSBuild
+      - name: Build unsigned .ipa
+        script: |
+          cd build/ios # انتقل إلى مجلد Xcode الذي تم إنشاؤه
+          xcodebuild archive \
+            -scheme Unity-iPhone \
+            -archivePath ../../build/ios/archive/Unity-iPhone.xcarchive \
             -sdk iphoneos \
-            BUILD_DIR="$BUILD_DIR" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build || true
-
-          if [ -d "$BUILD_DIR/Unity-iPhone.app" ]; then
-            echo "App built, packaging IPA..."
-            cd "$BUILD_DIR"
-            mkdir -p Payload
-            cp -R Unity-iPhone.app Payload/
-            zip -r UnsignedApp.ipa Payload
-            echo "IPA ready: $BUILD_DIR/UnsignedApp.ipa"
-          else
-            echo "No .app produced; build likely required signing. See logs."
-            exit 2
-          fi
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+          xcodebuild -exportArchive \
+            -archivePath ../../build/ios/archive/Unity-iPhone.xcarchive \
+            -exportPath ../../build/ios/ipa \
+            -exportOptionsPlist ExportOptions.plist
     artifacts:
-      - build/Release-iphoneos/UnsignedApp.ipa
+      - build/ios/ipa/*.ipa
